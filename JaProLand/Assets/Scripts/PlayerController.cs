@@ -17,6 +17,11 @@ public class PlayerController : MonoBehaviour
     private float maxMana;
 	private float score;
     private int numKill;
+	private bool isCharging;
+
+	private Coroutine corRestoreMana;
+
+	private string status;
 
     void Start()
     {
@@ -28,6 +33,7 @@ public class PlayerController : MonoBehaviour
         currMana = 8;
         maxMana = 8;
         numKill = 0;
+		status = "idle";
     }
 
     void Update()
@@ -38,10 +44,20 @@ public class PlayerController : MonoBehaviour
 		if(Input.GetMouseButtonDown(0))
             {
 			target = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+			status = "walk";
+			StopCoroutine (corRestoreMana);
+			isCharging = false;
             }
         //}
 
         transform.position = Vector2.MoveTowards(transform.position, target, speed * Time.deltaTime);
+		if (Vector2.Distance (target, transform.position) < 0.001f) {
+			status = "idle";
+		}
+		if (status == "idle" && !isCharging) {
+			isCharging = true;
+			corRestoreMana = StartCoroutine (restoreMana ());
+		}
         //var angle = Mathf.Atan2(target.y - transform.position.y, target.x - transform.position.x) * Mathf.Rad2Deg;
         //transform.rotation = Quaternion.Euler(0, 0, angle * 90);
         
@@ -79,16 +95,18 @@ public class PlayerController : MonoBehaviour
             Debug.Log("Player on Tower", gameObject);
             Debug.Log("Recharge mana " + currMana);
 
-            restoreMana();
+            //restoreMana();
             //IEnumerator coroutine = increaseMana();
             //StartCoroutine(coroutine);
         }
     }
 
-    private void restoreMana()
+	IEnumerator restoreMana()
     {
-		if (currMana < maxMana) {
-			currMana = currMana + 1;		
+		yield return new WaitForSeconds (0.2f);
+		while (currMana < maxMana) {
+			currMana = currMana + 1;
+			yield return new WaitForSeconds (0.2f);
 		}
         //currMana = Mathf.Min(currMana + 1 * Time.deltaTime, maxMana);
         /*while(currMana < maxMana)
